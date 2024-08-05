@@ -19,6 +19,6 @@ RUN --mount=type=cache,target=/root/.cache \
     pip install ./python_template_module
 
 
-CMD ["python", "python_template_module/src/python_template_module.py"]
+CMD ["python", "python_template_module.py"]
 
 #########################################
