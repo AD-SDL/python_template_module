@@ -5,6 +5,7 @@ REST-based node that interfaces with WEI and provides a simple Sleep(t) function
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 
+import python_template_driver as driver
 from fastapi.datastructures import UploadFile
 from starlette.datastructures import State
 from typing_extensions import Annotated
@@ -17,8 +18,6 @@ from wei.types.step_types import (
     StepStatus,
 )
 from wei.utils import extract_version
-
-import python_template_driver as driver
 
 rest_module = RESTModule(
     name="python_template_module",
@@ -87,6 +86,7 @@ def custom_state_handler(state: State) -> ModuleState:
 ###########
 
 # TODO: Define functions to handle each action the device should be able to perform
+
 
 @rest_module.action(
     name="add", description="An example action that adds two numbers together."
@@ -175,6 +175,7 @@ def run_protocol(
         status=StepStatus.SUCCEEDED,
         path=output_file,
     )
+
 
 # * If you don't want to/can't use the decorator, you can also add actions like this:
 def print(output: str) -> StepResponse:
