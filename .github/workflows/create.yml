@@ -1,7 +1,7 @@
 name: Create New Module Repo
 
-# Only run when the new module is created
-on: create
+# Only run when the new module is created, or manually triggered.
+on: [create, workflow_dispatch]
 
 jobs:
     rename:
@@ -14,9 +14,6 @@ jobs:
                 # this fetches all history so that we can read each commit
                 fetch-depth: 0
                 ref: ${{ github.head_ref }}
-
-            - run: echo "$(echo '${{ github.repository }}' | awk -F '/' '{print $2}' | tr '-' '_')" >> $GITHUB_ENV
-              shell: bash
 
             - run: echo "REPOSITORY_OWNER=$(echo '${{ github.repository }}' | awk -F '/' '{print $1}')" >> $GITHUB_ENV
               shell: bash
