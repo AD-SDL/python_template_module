@@ -5,7 +5,6 @@ REST-based node that interfaces with WEI and provides a simple Sleep(t) function
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 
-import python_template_driver as driver
 from fastapi.datastructures import UploadFile
 from starlette.datastructures import State
 from typing_extensions import Annotated
@@ -18,6 +17,8 @@ from wei.types.step_types import (
     StepStatus,
 )
 from wei.utils import extract_version
+
+import python_template_interface as interface
 
 rest_module = RESTModule(
     name="python_template_module",
@@ -44,7 +45,7 @@ def custom_startup_handler(state: State):
     state.sum = 0
     state.difference = 0
 
-    # driver.initialize()  # *Initialize the device, if needed
+    # state.interface = interface.initialize()  # *Initialize the device, if needed
 
 
 @rest_module.shutdown()
@@ -55,7 +56,7 @@ def custom_shutdown_handler(state: State):
     If this isn't provided, the default shutdown handler will be used, which will do nothing.
     """
 
-    # driver.disconnect()  # *Close device connection or do other cleanup, if needed
+    # state.interface.disconnect()  # *Close device connection or do other cleanup, if needed
 
 
 @rest_module.state_handler()
@@ -68,7 +69,7 @@ def custom_state_handler(state: State) -> ModuleState:
     ModuleState(status=state.status, error=state.error)
     """
 
-    # driver.query_state(state)  # *Query the state of the device, if supported
+    # state.interface.query_state(state)  # *Query the state of the device, if supported
 
     return ModuleState.model_validate(
         {
@@ -167,7 +168,7 @@ def run_protocol(
         f.seek(0)
 
         # *Run protocol file
-        driver.run_protocol(Path(f.name))
+        interface.run_protocol(Path(f.name))
 
     output_file = Path("path/to/output/file")
 

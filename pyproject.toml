@@ -1,7 +1,7 @@
 [project]
 name = "python_template_module"
 version = "0.0.0"
-description = "A simple example module that implements a sleep(t) function"
+description = "TODO: Add a description here"
 authors = [{name = "Ryan D. Lewis", email="ryan.lewis@anl.gov"}]
 # TODO: Add additional dependencies here
 dependencies = [

@@ -1,11 +1,10 @@
-name: Create New Module Repo
+name: Rename Module Repo
 
-# Only run when the new module is created, or manually triggered.
+# Only run when the new module is created
 on: [create, workflow_dispatch]
 
 jobs:
     rename:
-        if: github.ref == 'refs/heads/main'
         runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@v3
@@ -15,13 +14,13 @@ jobs:
                 fetch-depth: 0
                 ref: ${{ github.head_ref }}
 
-            - run: echo "REPOSITORY_OWNER=$(echo '${{ github.repository }}' | awk -F '/' '{print $1}')" >> $GITHUB_ENV
-              shell: bash
-
             - run: |
-                replacement_string="$(echo '${{ github.repository }}' | awk -F '/' '{print $2}' | tr '-' '_') | tr '[:upper:]' '[:lower:]"
+                replacement_string="$(echo '${{ github.repository }}' | awk -F '/' '{print $2}' | tr '-' '_' | tr '[:upper:]' '[:lower:]')"
                 replacement_string="${replacement_string%_module}"
                 .github/rename.sh python_template "$replacement_string"
 
-            - name: Git Commit/Push Changes
-              uses: actions-x/commit@v1
+            - uses: stefanzweifel/git-auto-commit-action@v4
+              with:
+                commit_message: "Renamed module"
+                push_options: --force
+                file_pattern: . :!.github # Don't modify the workflow
