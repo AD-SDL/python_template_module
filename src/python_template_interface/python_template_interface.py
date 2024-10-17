@@ -12,11 +12,25 @@ from starlette.datastructures import State
 # from Your.Interface.Namespace import InterfaceClass
 
 
-def run_protocol(path: Path):
-    """Run a protocol file"""
-    pass
+class Interface:
+    """
+    The skeleton for a device interface.
+    TODO: Replace with your device-specific interface implementation
+    """
+
+    def __init__():
+        """Initialize the interface"""
+        pass
+
+    def __del__():
+        """Disconnect/cleanup interface"""
+        pass
+
+    def run_protocol(path: Path):
+        """Run a protocol file"""
+        pass
 
 
-def query_state(state: State):
-    """Update the state by querying the device"""
-    pass
+    def query_state(state: State):
+        """Update the state by querying the device"""
+        pass

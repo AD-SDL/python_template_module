@@ -9,7 +9,12 @@ from fastapi.datastructures import UploadFile
 from starlette.datastructures import State
 from typing_extensions import Annotated
 from wei.modules.rest_module import RESTModule
-from wei.types.module_types import ModuleAction, ModuleActionArg, ModuleState
+from wei.types.module_types import (
+    ModuleAction,
+    ModuleActionArg,
+    ModuleState,
+    ValueModuleActionResult,
+)
 from wei.types.step_types import (
     ActionRequest,
     StepFileResponse,
@@ -20,22 +25,22 @@ from wei.utils import extract_version
 
 import python_template_interface as interface
 
-rest_module = RESTModule(
+python_template_module = RESTModule(
     name="python_template_module",
     version=extract_version(Path(__file__).parent.parent / "pyproject.toml"),
     description="TODO: Provide a description of your module here.",
     model="TODO: specify the device model this module controls",
 )
 
-# ***********#
-# *Lifecycle*#
-# ***********#
+#***********#
+#*Lifecycle*#
+#***********#
 
 # TODO: Define any custom functionality needed to handle the startup, shutdown, and state of the device
 # * All of these functions are optional, and can be removed if not needed
 
 
-@rest_module.startup()
+@python_template_module.startup()
 def custom_startup_handler(state: State):
     """
     Custom startup handler that is called whenever the module is started.
@@ -44,11 +49,12 @@ def custom_startup_handler(state: State):
     """
     state.sum = 0
     state.difference = 0
+    state.interface = None
 
-    # state.interface = interface.initialize()  # *Initialize the device, if needed
+    # state.interface = interface.Interface()  # *Initialize the device, if needed
 
 
-@rest_module.shutdown()
+@python_template_module.shutdown()
 def custom_shutdown_handler(state: State):
     """
     Custom shutdown handler that is called whenever the module is shutdown.
@@ -56,10 +62,10 @@ def custom_shutdown_handler(state: State):
     If this isn't provided, the default shutdown handler will be used, which will do nothing.
     """
 
-    # state.interface.disconnect()  # *Close device connection or do other cleanup, if needed
+    # del state.interface  # *Close device connection or do other cleanup, if needed
 
 
-@rest_module.state_handler()
+@python_template_module.state_handler()
 def custom_state_handler(state: State) -> ModuleState:
     """
     Custom state handler that is called whenever the modules state is requested via the REST API.
@@ -69,12 +75,13 @@ def custom_state_handler(state: State) -> ModuleState:
     ModuleState(status=state.status, error=state.error)
     """
 
-    # state.interface.query_state(state)  # *Query the state of the device, if supported
+    # if state.interface:
+        # state.interface.query_state(state)  # *Query the state of the device, if supported
 
     return ModuleState.model_validate(
         {
-            "status": state.status,  # *Required
-            "error": state.error,
+            "status": state.status,  # *Required, Dict[ModuleStatus, bool]
+            "error": state.error, # * Optional, str
             # *Custom state fields
             "sum": state.sum,
             "difference": state.difference,
@@ -82,15 +89,23 @@ def custom_state_handler(state: State) -> ModuleState:
     )
 
 
-###########
-# Actions #
-###########
+#*********#
+#*Actions*#
+#*********#
 
 # TODO: Define functions to handle each action the device should be able to perform
 
 
-@rest_module.action(
-    name="add", description="An example action that adds two numbers together."
+@python_template_module.action(
+    name="add",
+    description="An example action that adds two numbers together.",
+    #* Optionally, you can annotate the values returned by the action, if any
+    results=[
+        ValueModuleActionResult(
+            label="sum",
+            description="The sum of a and b"
+        )
+    ]
 )
 def add(
     a: Annotated[float, "First number to add"],
@@ -112,11 +127,11 @@ def add(
 
     state.sum = a + b
 
-    return StepResponse.step_succeeded(state.sum)
+    return StepResponse.step_succeeded(data={"sum": state.sum})
 
 
 # * If you don't specify a name or description, the function name and docstring will be used
-@rest_module.action()
+@python_template_module.action()
 def subtract(
     a: Annotated[float, "First number to subtract from"],
     b: Annotated[float, "Second number to subtract"],
@@ -136,18 +151,17 @@ def subtract(
         b: 10
     """
 
-    # state.difference = a - b
     state.difference = (
         action.args["a"] - action.args["b"]
-    )  # *This is equivalent to the above
+    )  # *This is equivalent to `state.difference = a - b`
     state.difference -= action.args.get(
         "c", 0
     )  # * You can also use get to provide a default value
 
-    return StepResponse.step_succeeded(state.difference)
+    return StepResponse.step_succeeded(data={"difference": state.difference})
 
 
-@rest_module.action(name="run_protocol", description="Run a protocol file")
+@python_template_module.action(name="run_protocol", description="Run a protocol file")
 def run_protocol(
     protocol: Annotated[UploadFile, "Protocol file to run"],
 ) -> StepFileResponse:
@@ -179,7 +193,7 @@ def run_protocol(
 
 
 # * If you don't want to/can't use the decorator, you can also add actions like this:
-def print(output: str) -> StepResponse:
+def print_func(output: str) -> StepResponse:
     """
     Print a message
     """
@@ -187,17 +201,66 @@ def print(output: str) -> StepResponse:
     return StepResponse.step_succeeded()
 
 
-rest_module.actions.append(
+python_template_module.actions.append(
     ModuleAction(
         name="print",
         description="A simple print action",
-        function=print,
+        function=print_func,
         args=[
             ModuleActionArg(name="output", type="str", description="Message to print")
         ],
     )
 )
 
+#****************#
+#*Admin Commands*#
+#****************#
 
+# TODO: Add support for admin commands, if desired
+
+"""
+To add support for custom admin actions, uncomment one or more of the
+functions below.
+By default, a module supports SHUTDOWN, RESET, LOCK, and UNLOCK modules. This can be overridden by using the decorators below, or setting a custom Set for python_rest_module.admin_commands
+"""
+
+# @python_template_module.pause
+# def pause(state: State):
+#     """Support pausing actions on this module"""
+#     pass
+
+# @python_template_module.resume
+# def resume(state: State):
+#     """Support resuming actions on this module"""
+#     pass
+
+# @python_template_module.cancel
+# def cancel(state: State):
+#     """Support cancelling actions on this module"""
+#     pass
+
+# @python_template_module.lock
+# def lock(state: State):
+#     """Support locking the module to prevent new actions from being accepted"""
+#     pass
+
+# @python_template_module.unlock
+# def unlock(state: State):
+#     """Support unlocking the module to allow new actions to be accepted"""
+#     pass
+
+# @python_template_module.reset
+# def reset(state: State):
+#     """Support resetting the module.
+#     This should clear errors and reconnect to/reinitialize the device, if possible"""
+#     pass
+
+# @python_template_module.shutdown
+# def shutdown(state: State):
+#     """Support shutting down the module"""
+#     pass
+
+
+# *This runs the arg_parser, startup lifecycle method, and starts the REST server
 if __name__ == "__main__":
-    rest_module.start()
+    python_template_module.start()
