@@ -10,6 +10,7 @@ from starlette.datastructures import State
 from typing_extensions import Annotated
 from wei.modules.rest_module import RESTModule
 from wei.types.module_types import (
+    LocalFileModuleActionResult,
     ModuleAction,
     ModuleActionArg,
     ModuleState,
@@ -131,7 +132,14 @@ def add(
 
 
 # * If you don't specify a name or description, the function name and docstring will be used
-@python_template_module.action()
+@python_template_module.action(
+    results=[
+        ValueModuleActionResult(
+            label="difference",
+            description="The difference between a and b (and optionally c)"
+        )
+    ]
+)
 def subtract(
     a: Annotated[float, "First number to subtract from"],
     b: Annotated[float, "Second number to subtract"],
@@ -161,7 +169,16 @@ def subtract(
     return StepResponse.step_succeeded(data={"difference": state.difference})
 
 
-@python_template_module.action(name="run_protocol", description="Run a protocol file")
+@python_template_module.action(
+    name="run_protocol",
+    description="Run a protocol file",
+    results=[
+        LocalFileModuleActionResult(
+            label="output_file",
+            description="The output file from the protocol",
+        )
+    ]
+)
 def run_protocol(
     protocol: Annotated[UploadFile, "Protocol file to run"],
 ) -> StepFileResponse:
@@ -188,7 +205,9 @@ def run_protocol(
 
     return StepFileResponse(
         status=StepStatus.SUCCEEDED,
-        path=output_file,
+        files={
+            "output_file": output_file,
+        },
     )
 
 
